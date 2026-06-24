@@ -350,7 +350,8 @@ function showViewText(content) {
   const lines = content.split('\n').length;
   const wrap = document.getElementById('view-text-wrap');
   wrap.style.display = 'flex';
-  wrap.innerHTML = `<div id="view-line-nums">${Array.from({length:lines}, (_, i) => i+1).join('\n')}</div><div id="view-code"></div>`;
+  const nums = Array.from({length: lines}, (_, i) => i+1).join('\n');
+  wrap.innerHTML = `<div id="view-line-nums">${nums}</div><div id="view-code"></div>`;
   wrap.querySelector('#view-code').textContent = content;
 }
 

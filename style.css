@@ -9,22 +9,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Courie
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 button,select,input,textarea{font-family:'Courier New',monospace;font-size:12px}
-#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .logo{color:var(--accent);font-size:15px;font-weight:bold;letter-spacing:3px;cursor:pointer;user-select:none}
 .logo-dim{color:var(--text3)}
-#logo-img{height:36px;width:auto;vertical-align:middle;margin-right:10px;display:inline-block}
-#logo-text{vertical-align:middle;font-size:18px}
+#logo-img{height:52px;width:auto;vertical-align:middle;margin-right:12px;display:inline-block}
+#logo-text{vertical-align:middle;font-size:20px}
 #view-stats-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:5px 16px;display:flex;gap:20px;font-size:11px;color:var(--text3);flex-shrink:0}
 #view-stats-bar span{display:flex;align-items:center;gap:4px}
 .like-btn{color:var(--text2)}
 .like-btn:hover{color:var(--accent);border-color:var(--accent)}
 .like-btn.liked{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
-#line-nums{white-space:pre;word-break:normal}
+#line-nums{white-space:pre;word-break:normal;overflow-wrap:normal}
+#view-line-nums{white-space:pre;word-break:normal;overflow-wrap:normal;background:var(--bg2);border-right:1px solid var(--border);padding:10px;color:var(--text3);font-size:13px;line-height:1.6;text-align:right;min-width:46px;max-width:46px;user-select:none;overflow:hidden;flex-shrink:0}
 #topnav{display:flex;gap:16px}
 #topnav a{color:var(--text2);font-size:11px}
 #topnav a:hover{color:var(--accent)}
 #topright{font-size:10px;color:var(--text3)}
-#layout{display:flex;height:calc(100vh - 36px)}
+#layout{display:flex;height:calc(100vh - 68px)}
 #sidebar{width:180px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
 .sb-section{margin-bottom:4px}
 .sb-label{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:14px 14px 6px}
@@ -84,7 +85,7 @@ button,select,input,textarea{font-family:'Courier New',monospace;font-size:12px}
 #drag-overlay-text{color:var(--accent);font-size:14px;letter-spacing:2px}
 #drag-overlay-sub{color:var(--accent2);font-size:11px}
 #text-section{display:flex;flex:1;overflow:hidden;min-height:120px}
-#line-nums{background:var(--bg2);border-right:1px solid var(--border);padding:10px;color:var(--text3);font-size:13px;line-height:1.6;text-align:right;min-width:46px;user-select:none;overflow:hidden;flex-shrink:0}
+#line-nums{background:var(--bg2);border-right:1px solid var(--border);padding:10px;color:var(--text3);font-size:13px;line-height:1.6;text-align:right;min-width:46px;max-width:46px;user-select:none;overflow:hidden;flex-shrink:0;white-space:pre;word-break:normal;overflow-wrap:normal}
 #editor{flex:1;background:var(--bg);border:none;outline:none;resize:none;font-size:13px;line-height:1.6;color:var(--text);padding:10px 14px;caret-color:var(--accent)}
 #editor::placeholder{color:var(--text3)}
 #attach-strip{background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;display:none;flex-direction:column}
