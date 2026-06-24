@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEAKBIN</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div style="display:flex;align-items:center;gap:18px">
+    <div class="logo" onclick="showHome()">LEAK<span class="logo-dim">/</span>BIN</div>
+    <div id="topnav">
+      <a href="#" onclick="showHome();return false">home</a>
+      <a href="#" onclick="showNew();return false">new paste</a>
+      <a href="#" id="raw-link" style="display:none">raw</a>
+    </div>
+  </div>
+  <div id="topright">firebase: <span id="fb-status" style="color:#4a1a0a">offline</span></div>
+</div>
+<div id="firebase-bar">running in local mode — add your firebase config to enable cloud storage</div>
+
+<div id="layout">
+  <div id="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">navigate</div>
+      <div class="sb-item" id="sb-home" onclick="showHome()"><div class="sb-dot"></div>home</div>
+      <div class="sb-item" id="sb-new" onclick="showNew()"><div class="sb-dot"></div>new paste</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">browse</div>
+      <div class="sb-item" onclick="applyFilter('all')"><div class="sb-dot"></div>all pastes</div>
+      <div class="sb-item" onclick="applyFilter('public')"><div class="sb-dot"></div>public</div>
+      <div class="sb-item" onclick="applyFilter('unlisted')"><div class="sb-dot"></div>unlisted</div>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <div id="home-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div id="home-toolbar">
+        <input id="home-search" type="text" placeholder="search titles..." oninput="onSearch()">
+        <select class="home-filter" id="filter-vis" onchange="renderTable()">
+          <option value="all">all visibility</option>
+          <option value="public">public</option>
+          <option value="unlisted">unlisted</option>
+        </select>
+        <button class="tb-btn" onclick="loadPastes()" style="font-size:11px">refresh</button>
+        <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="home-count"></span>
+      </div>
+      <div id="paste-table-wrap">
+        <table id="paste-table">
+          <thead><tr>
+            <th onclick="sortBy('title')" id="th-title">title</th>
+            <th onclick="sortBy('attachments')" id="th-att">files</th>
+            <th onclick="sortBy('visibility')" id="th-vis">visibility</th>
+            <th onclick="sortBy('size')" id="th-size" style="text-align:right">size</th>
+            <th onclick="sortBy('created')" id="th-created" class="sorted">created ↓</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="paste-tbody"></tbody>
+        </table>
+        <div id="home-empty">
+          <div class="empty-title">no pastes yet</div>
+          <div style="font-size:12px;color:var(--text3)">create your first paste below</div>
+          <button class="tb-btn primary" onclick="showNew()">+ new paste</button>
+        </div>
+      </div>
+      <div id="home-pagination">
+        <button class="page-btn" id="btn-prev" onclick="prevPage()" disabled>← prev</button>
+        <div id="page-info"></div>
+        <button class="page-btn" id="btn-next" onclick="nextPage()">next →</button>
+        <span id="home-stats-right" style="margin-left:auto;font-size:11px;color:var(--text3)"></span>
+      </div>
+    </div>
+
+    <div id="new-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div id="toolbar">
+        <input id="paste-title-input" type="text" placeholder="untitled paste" maxlength="100">
+        <div class="tb-sep"></div>
+        <select class="tb-select" id="visibility-select">
+          <option value="public">public</option>
+          <option value="unlisted">unlisted</option>
+        </select>
+        <select class="tb-select" id="expiry-select">
+          <option value="0">never</option>
+          <option value="600">10 min</option>
+          <option value="3600">1 hour</option>
+          <option value="86400">1 day</option>
+          <option value="604800">1 week</option>
+        </select>
+        <select class="tb-select" id="mode-select">
+          <option value="text">text / code</option>
+          <option value="markdown">markdown</option>
+        </select>
+        <div class="tb-sep"></div>
+        <div id="url-bar">
+          <span id="url-bar-text"></span>
+          <button id="url-copy-btn" onclick="copyUrl()" title="copy link">⎘</button>
+        </div>
+        <button class="tb-btn" onclick="clearEditor()">clear</button>
+        <button class="tb-btn primary" id="submit-btn" onclick="submitPaste()">submit</button>
+      </div>
+
+      <div id="editor-body"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event)">
+
+        <div id="drag-overlay">
+          <div id="drag-overlay-text">drop files here</div>
+          <div id="drag-overlay-sub">images · videos · audio · any file</div>
+        </div>
+
+        <div id="text-section">
+          <div id="line-nums">1</div>
+          <textarea id="editor" spellcheck="false" placeholder="paste your text, code, or markdown here...&#10;drag files anywhere onto this window to attach them"></textarea>
+        </div>
+
+        <div id="attach-strip">
+          <div id="attach-strip-header">
+            <span id="attach-strip-label">attachments</span>
+            <button id="attach-add-btn" onclick="document.getElementById('file-input').click()">+ add files</button>
+          </div>
+          <div id="attach-row">
+            <div id="drop-here-card" onclick="document.getElementById('file-input').click()">
+              <div class="plus">+</div>
+              <div>add files</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="statusbar">
+        <span><span class="st-lbl">ln</span> <span id="st-ln">1</span></span>
+        <span><span class="st-lbl">col</span> <span id="st-col">1</span></span>
+        <span><span class="st-lbl">chars</span> <span id="st-chars">0</span></span>
+        <span><span class="st-lbl">files</span> <span id="st-files">0</span></span>
+        <span id="status-msg"></span>
+      </div>
+
+      <input type="file" id="file-input" multiple onchange="addFiles(this.files); this.value=''">
+    </div>
+
+    <div id="view-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div id="view-header">
+        <div>
+          <div id="view-title"></div>
+          <div id="view-meta"></div>
+        </div>
+        <div id="view-actions">
+          <button class="tb-btn" onclick="showNew()">+ new</button>
+          <button class="tb-btn" id="btn-clone" onclick="clonePaste()">clone</button>
+          <button class="tb-btn" id="btn-raw-toggle" onclick="toggleRaw()" style="display:none">raw</button>
+          <button class="tb-btn primary" onclick="copyUrl()">copy link</button>
+        </div>
+      </div>
+      <div id="view-body">
+        <div id="md-render" style="display:none"></div>
+        <div id="view-text-wrap" style="display:none"></div>
+        <div id="view-attachments" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="feed">
+    <div class="feed-hdr">recent</div>
+    <div id="feed-list"><div style="padding:12px;color:var(--text3);font-size:11px">loading...</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
