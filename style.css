@@ -12,6 +12,8 @@ button,select,input,textarea{font-family:'Courier New',monospace;font-size:12px}
 #topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .logo{color:var(--accent);font-size:15px;font-weight:bold;letter-spacing:3px;cursor:pointer;user-select:none}
 .logo-dim{color:var(--text3)}
+#logo-img{height:22px;width:auto;vertical-align:middle;margin-right:8px;display:inline-block}
+#logo-text{vertical-align:middle}
 #topnav{display:flex;gap:16px}
 #topnav a{color:var(--text2);font-size:11px}
 #topnav a:hover{color:var(--accent)}

@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LEAKBIN</title>
+<link rel="icon" type="image/png" href="logo.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:18px">
-    <div class="logo" onclick="showHome()">LEAK<span class="logo-dim">/</span>BIN</div>
+    <div class="logo" onclick="showHome()"><img src="logo.png" alt="LeakBin" id="logo-img"><span id="logo-text">LEAK<span class="logo-dim">/</span>BIN</span></div>
     <div id="topnav">
       <a href="#" onclick="showHome();return false">home</a>
       <a href="#" onclick="showNew();return false">new paste</a>
