@@ -11,7 +11,10 @@
 
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:18px">
-    <div class="logo" onclick="showHome()"><img src="logo.png" alt="LeakBin" id="logo-img"><span id="logo-text">LEAK<span class="logo-dim">/</span>BIN</span></div>
+    <div class="logo" onclick="showHome()">
+      <img src="logo.png" alt="LeakBin" id="logo-img">
+      <span id="logo-text">LEAK<span class="logo-dim">/</span>BIN</span>
+    </div>
     <div id="topnav">
       <a href="#" onclick="showHome();return false">home</a>
       <a href="#" onclick="showNew();return false">new paste</a>
@@ -31,9 +34,10 @@
     </div>
     <div class="sb-section">
       <div class="sb-label">browse</div>
-      <div class="sb-item" onclick="applyFilter('all')"><div class="sb-dot"></div>all pastes</div>
-      <div class="sb-item" onclick="applyFilter('public')"><div class="sb-dot"></div>public</div>
-      <div class="sb-item" onclick="applyFilter('unlisted')"><div class="sb-dot"></div>unlisted</div>
+      <div class="sb-item" onclick="applyFilter('all','created')"><div class="sb-dot"></div>all pastes</div>
+      <div class="sb-item" onclick="applyFilter('all','likes')"><div class="sb-dot"></div>most liked</div>
+      <div class="sb-item" onclick="applyFilter('public','created')"><div class="sb-dot"></div>public</div>
+      <div class="sb-item" onclick="applyFilter('unlisted','created')"><div class="sb-dot"></div>unlisted</div>
     </div>
   </div>
 
@@ -47,6 +51,11 @@
           <option value="public">public</option>
           <option value="unlisted">unlisted</option>
         </select>
+        <select class="home-filter" id="filter-sort" onchange="onSortSelect()">
+          <option value="created">newest first</option>
+          <option value="likes">most liked</option>
+          <option value="views">most viewed</option>
+        </select>
         <button class="tb-btn" onclick="loadPastes()" style="font-size:11px">refresh</button>
         <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="home-count"></span>
       </div>
@@ -56,6 +65,8 @@
             <th onclick="sortBy('title')" id="th-title">title</th>
             <th onclick="sortBy('attachments')" id="th-att">files</th>
             <th onclick="sortBy('visibility')" id="th-vis">visibility</th>
+            <th onclick="sortBy('views')" id="th-views">views</th>
+            <th onclick="sortBy('likes')" id="th-likes">likes</th>
             <th onclick="sortBy('size')" id="th-size" style="text-align:right">size</th>
             <th onclick="sortBy('created')" id="th-created" class="sorted">created ↓</th>
             <th></th>
@@ -155,8 +166,13 @@
           <button class="tb-btn" onclick="showNew()">+ new</button>
           <button class="tb-btn" id="btn-clone" onclick="clonePaste()">clone</button>
           <button class="tb-btn" id="btn-raw-toggle" onclick="toggleRaw()" style="display:none">raw</button>
+          <button class="tb-btn like-btn" id="btn-like" onclick="likePaste()">♥ <span id="like-count">0</span></button>
           <button class="tb-btn primary" onclick="copyUrl()">copy link</button>
         </div>
+      </div>
+      <div id="view-stats-bar">
+        <span>👁 <span id="view-count">0</span> views</span>
+        <span>♥ <span id="view-likes">0</span> likes</span>
       </div>
       <div id="view-body">
         <div id="md-render" style="display:none"></div>

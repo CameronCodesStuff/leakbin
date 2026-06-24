@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getAnalytics } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js';
-import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, increment, query, orderBy, limit, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js';
 
 const FIREBASE_CONFIG = {
@@ -21,10 +21,13 @@ const PAGE_SIZE = 25;
 let pendingFiles = [];
 let showingRaw = false;
 let dragCounter = 0;
+let likedPastes = new Set();
 
 let localPastes = [];
 try { localPastes = JSON.parse(localStorage.getItem('leakbin_local') || '[]'); } catch(e) {}
+try { likedPastes = new Set(JSON.parse(localStorage.getItem('leakbin_liked') || '[]')); } catch(e) {}
 function saveLocal() { try { localStorage.setItem('leakbin_local', JSON.stringify(localPastes.slice(0, 200))); } catch(e) {} }
+function saveLiked() { try { localStorage.setItem('leakbin_liked', JSON.stringify([...likedPastes])); } catch(e) {} }
 
 try {
   if (FIREBASE_CONFIG.apiKey) {
@@ -43,6 +46,7 @@ try {
 function genId() { return Array.from({length:8}, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random()*36)]).join(''); }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtSize(n) { if (!n||n<0) return '0b'; if (n<1024) return n+'b'; if (n<1048576) return (n/1024).toFixed(1)+'kb'; return (n/1048576).toFixed(1)+'mb'; }
+function fmtNum(n) { if (!n) return '0'; if (n>=1000) return (n/1000).toFixed(1)+'k'; return String(n); }
 function timeAgo(ms) { if (!ms) return 'just now'; const s=Math.floor((Date.now()-ms)/1000); if (s<60) return s+'s ago'; if (s<3600) return Math.floor(s/60)+'m ago'; if (s<86400) return Math.floor(s/3600)+'h ago'; if (s<2592000) return Math.floor(s/86400)+'d ago'; return new Date(ms).toLocaleDateString(); }
 function extOf(name) { const p=name.lastIndexOf('.'); return p>=0 ? name.slice(p+1).toUpperCase() : 'FILE'; }
 
@@ -82,9 +86,21 @@ window.showNew = function() {
   history.pushState({}, '', location.pathname);
 };
 
-window.applyFilter = function(vis) {
+window.applyFilter = function(vis, sort) {
   showHome();
-  setTimeout(() => { document.getElementById('filter-vis').value = vis; renderTable(); }, 60);
+  setTimeout(() => {
+    document.getElementById('filter-vis').value = vis;
+    document.getElementById('filter-sort').value = sort || 'created';
+    sortKey = sort || 'created';
+    sortDir = -1;
+    renderTable();
+  }, 60);
+};
+
+window.onSortSelect = function() {
+  sortKey = document.getElementById('filter-sort').value;
+  sortDir = -1;
+  renderTable();
 };
 
 window.onDragOver = function(e) {
@@ -166,7 +182,7 @@ window.submitPaste = async function() {
   btn.disabled = true;
   btn.textContent = 'saving...';
 
-  let paste = { id, title, visibility, content, mode, created: now, expires: expiry > 0 ? now + expiry * 1000 : 0, attachments: [] };
+  let paste = { id, title, visibility, content, mode, created: now, expires: expiry > 0 ? now + expiry * 1000 : 0, attachments: [], views: 0, likes: 0 };
 
   if (pendingFiles.length > 0) {
     if (firebaseReady && storage) {
@@ -217,13 +233,26 @@ window.submitPaste = async function() {
 window.viewPaste = async function(id) {
   let paste = null;
   if (firebaseReady) {
-    try { const s = await getDoc(doc(db, 'pastes', id)); if (s.exists()) paste = s.data(); } catch(e) {}
+    try {
+      const s = await getDoc(doc(db, 'pastes', id));
+      if (s.exists()) paste = s.data();
+    } catch(e) {}
   }
   if (!paste) paste = localPastes.find(p => p.id === id);
   if (!paste) { toast('paste not found', 'error'); showHome(); return; }
 
   const createdMs = paste.created?.seconds ? paste.created.seconds * 1000 : paste.created;
   if (paste.expires && paste.expires > 0 && Date.now() > paste.expires) { toast('paste expired', 'error'); showHome(); return; }
+
+  if (firebaseReady) {
+    try {
+      await updateDoc(doc(db, 'pastes', id), { views: increment(1) });
+      paste = { ...paste, views: (paste.views || 0) + 1 };
+    } catch(e) {}
+  } else {
+    const local = localPastes.find(p => p.id === id);
+    if (local) { local.views = (local.views || 0) + 1; saveLocal(); paste = { ...paste, views: local.views }; }
+  }
 
   currentPasteId = id;
   currentPaste = paste;
@@ -239,6 +268,16 @@ window.viewPaste = async function(id) {
   if (hasText) parts.push(paste.mode === 'markdown' ? 'markdown' : 'text');
   if (attCount) parts.push(attCount + ' file' + (attCount !== 1 ? 's' : ''));
   document.getElementById('view-meta').textContent = `${timeAgo(createdMs)} · ${parts.join(' + ')} · ${fmtSize(paste.size || paste.content?.length || 0)} · ${paste.visibility}`;
+
+  const views = paste.views || 0;
+  const likes = paste.likes || 0;
+  document.getElementById('view-count').textContent = fmtNum(views);
+  document.getElementById('view-likes').textContent = fmtNum(likes);
+  document.getElementById('like-count').textContent = fmtNum(likes);
+
+  const alreadyLiked = likedPastes.has(id);
+  const likeBtn = document.getElementById('btn-like');
+  likeBtn.classList.toggle('liked', alreadyLiked);
 
   document.getElementById('md-render').style.display = 'none';
   document.getElementById('view-text-wrap').style.display = 'none';
@@ -276,6 +315,35 @@ window.viewPaste = async function(id) {
   history.pushState({ id }, '', '?p=' + id);
   document.getElementById('url-bar').style.display = 'flex';
   document.getElementById('url-bar-text').textContent = location.origin + location.pathname + '?p=' + id;
+};
+
+window.likePaste = async function() {
+  if (!currentPasteId) return;
+  const id = currentPasteId;
+  const alreadyLiked = likedPastes.has(id);
+  const delta = alreadyLiked ? -1 : 1;
+
+  if (alreadyLiked) likedPastes.delete(id); else likedPastes.add(id);
+  saveLiked();
+
+  const newLikes = Math.max(0, (currentPaste.likes || 0) + delta);
+  currentPaste = { ...currentPaste, likes: newLikes };
+
+  document.getElementById('like-count').textContent = fmtNum(newLikes);
+  document.getElementById('view-likes').textContent = fmtNum(newLikes);
+  document.getElementById('btn-like').classList.toggle('liked', !alreadyLiked);
+
+  if (firebaseReady) {
+    try {
+      await updateDoc(doc(db, 'pastes', id), { likes: increment(delta) });
+    } catch(e) {}
+  } else {
+    const local = localPastes.find(p => p.id === id);
+    if (local) { local.likes = newLikes; saveLocal(); }
+  }
+
+  const inList = allPastes.find(p => p.id === id);
+  if (inList) inList.likes = newLikes;
 };
 
 function showViewText(content) {
@@ -361,7 +429,7 @@ window.sortBy = function(key) {
     th.classList.remove('sorted');
     th.textContent = th.textContent.replace(/ [↑↓]$/, '');
   });
-  const map = { title:'th-title', attachments:'th-att', visibility:'th-vis', size:'th-size', created:'th-created' };
+  const map = { title:'th-title', attachments:'th-att', visibility:'th-vis', views:'th-views', likes:'th-likes', size:'th-size', created:'th-created' };
   const th = document.getElementById(map[key]);
   if (th) { th.classList.add('sorted'); th.textContent = th.textContent + (sortDir > 0 ? ' ↑' : ' ↓'); }
   renderTable();
@@ -385,6 +453,8 @@ function renderTable() {
     if (sortKey === 'title') return sortDir * (a.title || 'untitled').localeCompare(b.title || 'untitled');
     if (sortKey === 'attachments') return sortDir * ((a.attachments?.length||0) - (b.attachments?.length||0));
     if (sortKey === 'visibility') return sortDir * (a.visibility||'').localeCompare(b.visibility||'');
+    if (sortKey === 'views') return sortDir * ((a.views||0) - (b.views||0));
+    if (sortKey === 'likes') return sortDir * ((a.likes||0) - (b.likes||0));
     if (sortKey === 'size') return sortDir * ((a.size||0) - (b.size||0));
     if (sortKey === 'created') {
       const am = a.created?.seconds ? a.created.seconds*1000 : a.created||0;
@@ -411,10 +481,13 @@ function renderTable() {
       const attCount = p.attachments?.length || 0;
       const attBadge = attCount ? `<span class="tag">${attCount} file${attCount!==1?'s':''}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>';
       const modeBadge = p.mode === 'markdown' ? `<span class="tag" style="color:#885500;border-color:#2a1a00">md</span> ` : '';
+      const liked = likedPastes.has(p.id) ? ' style="color:var(--accent)"' : '';
       return `<tr onclick="viewPaste('${p.id}')">
         <td class="td-title">${modeBadge}<a href="?p=${p.id}" onclick="event.preventDefault()">${escHtml(p.title||'untitled')}</a></td>
         <td>${attBadge}</td>
         <td class="td-dim">${p.visibility}</td>
+        <td class="td-dim">👁 ${fmtNum(p.views||0)}</td>
+        <td class="td-dim"><span${liked}>♥</span> ${fmtNum(p.likes||0)}</td>
         <td class="td-num">${fmtSize(p.size||p.content?.length||0)}</td>
         <td class="td-dim">${timeAgo(ms)}</td>
         <td><button class="tb-btn" style="font-size:10px;padding:2px 8px" onclick="event.stopPropagation();cpUrl('${p.id}')">link</button></td>
@@ -445,7 +518,7 @@ async function loadFeed() {
     if (attCount) extras.push(attCount + ' file' + (attCount!==1?'s':''));
     return `<div class="feed-item" onclick="viewPaste('${p.id}')">
       <div class="fi-title">${escHtml(p.title||'untitled')}</div>
-      <div class="fi-meta">${extras.map(e => `<span class="tag">${e}</span>`).join('')} ${timeAgo(ms)}</div>
+      <div class="fi-meta">${extras.map(e => `<span class="tag">${e}</span>`).join('')} ${timeAgo(ms)} · ♥ ${fmtNum(p.likes||0)}</div>
     </div>`;
   }).join('');
 }

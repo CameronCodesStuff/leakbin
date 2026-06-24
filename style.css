@@ -12,8 +12,14 @@ button,select,input,textarea{font-family:'Courier New',monospace;font-size:12px}
 #topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .logo{color:var(--accent);font-size:15px;font-weight:bold;letter-spacing:3px;cursor:pointer;user-select:none}
 .logo-dim{color:var(--text3)}
-#logo-img{height:22px;width:auto;vertical-align:middle;margin-right:8px;display:inline-block}
-#logo-text{vertical-align:middle}
+#logo-img{height:36px;width:auto;vertical-align:middle;margin-right:10px;display:inline-block}
+#logo-text{vertical-align:middle;font-size:18px}
+#view-stats-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:5px 16px;display:flex;gap:20px;font-size:11px;color:var(--text3);flex-shrink:0}
+#view-stats-bar span{display:flex;align-items:center;gap:4px}
+.like-btn{color:var(--text2)}
+.like-btn:hover{color:var(--accent);border-color:var(--accent)}
+.like-btn.liked{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+#line-nums{white-space:pre;word-break:normal}
 #topnav{display:flex;gap:16px}
 #topnav a{color:var(--text2);font-size:11px}
 #topnav a:hover{color:var(--accent)}
