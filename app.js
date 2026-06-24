@@ -1,8 +1,16 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
+import { getAnalytics } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js';
+import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js';
 
 const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD7FWkvUkj9H_t_NjEVoJRIxKvkm32-bZM",
+  authDomain: "leakbin.firebaseapp.com",
+  projectId: "leakbin",
+  storageBucket: "leakbin.firebasestorage.app",
+  messagingSenderId: "1032642679821",
+  appId: "1:1032642679821:web:faf9252b96829950be3144",
+  measurementId: "G-7BHY1L1QFM"
 };
 
 let db = null, storage = null, firebaseReady = false;
@@ -21,6 +29,7 @@ function saveLocal() { try { localStorage.setItem('leakbin_local', JSON.stringif
 try {
   if (FIREBASE_CONFIG.apiKey) {
     const app = initializeApp(FIREBASE_CONFIG);
+    getAnalytics(app);
     db = getFirestore(app);
     storage = getStorage(app);
     firebaseReady = true;
